@@ -3,7 +3,19 @@ var router = express.Router();
 
 const Movie = require("../models/Movie");
 router.get("/", (req, res) => {
-  const promise = Movie.find({});
+  const promise = Movie.aggregate([
+    {
+      $lookup: {
+        from: "directors",
+        localField: "director_id",
+        foreignField: "_id",
+        as: "director",
+      },
+    },
+    {
+      $unwind: "$director",
+    }
+  ]);
   promise
     .then((data) => {
       res.json(data);
@@ -14,7 +26,7 @@ router.get("/", (req, res) => {
 });
 
 router.get("/top10", (req, res, next) => {
-  const promise = Movie.find({}).limit(10).sort({imdb:-1})
+  const promise = Movie.find({}).limit(10).sort({ imdb: -1 });
   promise
     .then((data) => {
       if (!data) {
@@ -27,7 +39,6 @@ router.get("/top10", (req, res, next) => {
       res.json(err);
     });
 });
-
 
 router.get("/:movie_id", (req, res, next) => {
   const promise = Movie.findById(req.params.movie_id);
@@ -80,13 +91,12 @@ router.post("/", (req, res, next) => {
   });
 });
 
-
 //SORTING
 router.get("/between/:up/:to", (req, res, next) => {
-  const {up,to}=req.params
-  console.log(up)
+  const { up, to } = req.params;
+  console.log(up);
   const promise = Movie.find({
-    year:{"$gte":parseInt(up),"$lte":parseInt(to)}
+    year: { $gte: parseInt(up), $lte: parseInt(to) },
   });
   promise
     .then((data) => {
